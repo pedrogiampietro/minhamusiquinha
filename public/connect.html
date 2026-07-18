@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Conectar Spotify</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family:"Segoe UI",system-ui,sans-serif;
+    background:#0d0d0d; color:#fff; min-height:100vh;
+    display:flex; align-items:center; justify-content:center; padding:24px;
+  }
+  .card {
+    background:#171717; border-radius:24px; padding:48px 40px;
+    max-width:440px; text-align:center; box-shadow:0 20px 60px rgba(0,0,0,.5);
+  }
+  h1 { font-size:26px; margin-bottom:12px; letter-spacing:-.5px; }
+  p { color:#a0a0a0; font-size:15px; line-height:1.6; margin-bottom:28px; }
+  a.btn {
+    display:inline-flex; align-items:center; gap:10px;
+    background:#1db954; color:#000; font-weight:700; font-size:16px;
+    padding:14px 28px; border-radius:999px; text-decoration:none;
+    transition:transform .15s ease, background .15s ease;
+  }
+  a.btn:hover { transform:translateY(-2px); background:#1ed760; }
+  svg { width:22px; height:22px; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <h1>Now Playing Widget</h1>
+    <p>Conecte sua conta do Spotify para gerar a URL do widget que você vai colar no OBS.</p>
+    <a class="btn" href="/login">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.59 14.43c-.19.31-.59.41-.9.22-2.46-1.5-5.56-1.84-9.21-1.01-.36.08-.71-.14-.79-.5-.08-.36.14-.71.5-.79 3.99-.91 7.42-.52 10.18 1.17.31.19.41.6.22.91zm1.23-2.73c-.24.39-.74.51-1.13.28-2.82-1.73-7.11-2.23-10.44-1.22-.44.13-.9-.11-1.03-.55-.13-.44.11-.9.55-1.03 3.81-1.15 8.54-.59 11.77 1.39.39.24.51.74.28 1.13zm.11-2.84C14.7 8.85 9.39 8.66 6.3 9.6c-.53.16-1.09-.14-1.25-.67-.16-.53.14-1.09.67-1.25 3.54-1.07 9.4-.87 13.11 1.33.47.28.62.89.34 1.36-.28.47-.89.62-1.36.34z"/></svg>
+      Conectar com Spotify
+    </a>
+  </div>
+</body>
+</html>

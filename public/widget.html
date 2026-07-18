@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Now Playing</title>
+<style>
+  :root {
+    --bg: #0d0d0d; --card: #171717; --text: #fff; --muted: #a0a0a0;
+    --accent: #1db954; --radius: 22px; --corner: 26px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html, body { background:transparent; font-family:"Segoe UI",-apple-system,sans-serif; color:var(--text); overflow:hidden; }
+  .widget {
+    width:640px; padding:14px; display:grid;
+    grid-template-columns:auto 1fr; grid-template-rows:auto auto;
+    gap:10px 14px; background:var(--bg); border-radius:var(--corner);
+    position:relative; opacity:0; transform:translateY(8px);
+    transition:opacity .4s ease, transform .4s ease;
+  }
+  .widget.show { opacity:1; transform:translateY(0); }
+  .widget.hidden { opacity:0 !important; }
+  .cover {
+    grid-row:1/3; width:150px; height:150px; border-radius:18px;
+    background:var(--card); display:flex; align-items:center; justify-content:center;
+    overflow:hidden; box-shadow:0 0 40px rgba(0,0,0,.4);
+  }
+  .cover img { width:100%; height:100%; object-fit:cover; }
+  .cover .placeholder { width:54px; height:54px; opacity:.85; }
+  .meta {
+    background:var(--card); border-radius:var(--radius); padding:22px 26px;
+    display:flex; flex-direction:column; justify-content:center; gap:8px; min-width:0;
+  }
+  .title-wrap { overflow:hidden; white-space:nowrap; }
+  .title { font-size:24px; font-weight:700; letter-spacing:-.3px; display:inline-block; }
+  .artist { font-size:17px; color:var(--muted); font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .album { font-size:13px; color:#777; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .title.empty, .artist.empty { color:#666; height:6px; width:34px; border-radius:3px; background:currentColor; }
+  @keyframes scroll-x { 0%,15%{transform:translateX(0);} 85%,100%{transform:translateX(var(--shift));} }
+  .title.scrolling { animation:scroll-x 12s linear infinite alternate; }
+  .progress {
+    background:var(--card); border-radius:var(--radius); padding:16px 24px;
+    display:flex; align-items:center; gap:18px;
+  }
+  .time { font-size:26px; font-weight:800; font-variant-numeric:tabular-nums; letter-spacing:.5px; }
+  .bars { flex:1; display:flex; align-items:center; gap:5px; height:26px; }
+  .bars span { flex:1; height:12px; border-radius:6px; background:#333; transition:background .25s ease; }
+  .bars span.on { background:var(--accent); }
+  .status-dot {
+    position:absolute; left:26px; bottom:6px; width:16px; height:16px;
+    border-radius:50%; background:var(--accent); box-shadow:0 0 10px rgba(29,185,84,.7);
+  }
+  .status-dot.off { background:#555; box-shadow:none; }
+</style>
+</head>
+<body>
+  <div class="widget" id="widget">
+    <div class="cover" id="cover">
+      <svg class="placeholder" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+    </div>
+    <div class="meta">
+      <div class="title-wrap"><span class="title empty" id="title"></span></div>
+      <div class="artist empty" id="artist"></div>
+      <div class="album" id="album" style="display:none"></div>
+    </div>
+    <div class="progress">
+      <span class="time" id="cur">00:00</span>
+      <div class="bars" id="bars"></div>
+      <span class="time" id="dur">00:00</span>
+    </div>
+    <div class="status-dot off" id="dot"></div>
+  </div>
+
+<script>
+  const WIDGET_ID = location.pathname.split("/").filter(Boolean).pop();
+  const qs = new URLSearchParams(location.search);
+
+  let cfg = {
+    bars:24, poll:3000, accent:"#1db954", bg:"#0d0d0d", card:"#171717",
+    showAlbum:false, scrollTitle:true, cornerRadius:26, hideWhenPaused:false,
+  };
+
+  const el = {
+    widget:document.getElementById("widget"), cover:document.getElementById("cover"),
+    title:document.getElementById("title"), artist:document.getElementById("artist"),
+    album:document.getElementById("album"), cur:document.getElementById("cur"),
+    dur:document.getElementById("dur"), bars:document.getElementById("bars"),
+    dot:document.getElementById("dot"),
+  };
+  let barEls = [];
+
+  function applyConfig() {
+    const r = document.documentElement.style;
+    r.setProperty("--accent", cfg.accent);
+    r.setProperty("--bg", cfg.bg);
+    r.setProperty("--card", cfg.card);
+    r.setProperty("--corner", cfg.cornerRadius + "px");
+    el.album.style.display = cfg.showAlbum ? "block" : "none";
+    // rebuild bars
+    el.bars.innerHTML = "";
+    for (let i=0;i<cfg.bars;i++) el.bars.appendChild(document.createElement("span"));
+    barEls = [...el.bars.children];
+  }
+
+  async function loadConfig() {
+    try {
+      const r = await fetch(`/api/config/${WIDGET_ID}`, {cache:"no-store"});
+      if (r.ok) cfg = {...cfg, ...(await r.json())};
+    } catch {}
+    // querystring sobrepõe (útil pra testes rápidos)
+    if (qs.get("bars")) cfg.bars = parseInt(qs.get("bars"));
+    if (qs.get("poll")) cfg.poll = parseInt(qs.get("poll"));
+    if (qs.get("accent")) cfg.accent = "#"+qs.get("accent").replace("#","");
+    applyConfig();
+  }
+
+  const fmt = (ms) => {
+    if (ms==null) return "00:00";
+    const s=Math.floor(ms/1000);
+    return `${String(Math.floor(s/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}`;
+  };
+
+  let state = { playing:false, progress:0, duration:0, lastFetch:0 };
+  let currentKey = "";
+
+  function renderBars(ratio) {
+    const active = Math.round(ratio * cfg.bars);
+    barEls.forEach((b,i)=>b.classList.toggle("on", i<active));
+  }
+
+  function setupScroll() {
+    if (!cfg.scrollTitle) return;
+    const wrap = el.title.parentElement;
+    el.title.classList.remove("scrolling");
+    requestAnimationFrame(()=>{
+      const over = el.title.scrollWidth - wrap.clientWidth;
+      if (over > 4) {
+        el.title.style.setProperty("--shift", `-${over}px`);
+        el.title.classList.add("scrolling");
+      }
+    });
+  }
+
+  function renderTrack(d) {
+    const key = d.trackId || (d.title+"|"+d.artist);
+    if (key !== currentKey) {
+      currentKey = key;
+      el.title.textContent = d.title; el.title.classList.remove("empty");
+      el.artist.textContent = d.artist; el.artist.classList.remove("empty");
+      if (cfg.showAlbum && d.album) el.album.textContent = d.album;
+      if (d.image) el.cover.innerHTML = `<img src="${d.image}" alt="">`;
+      setupScroll();
+    }
+    el.widget.classList.remove("hidden");
+  }
+
+  function setIdle() {
+    currentKey = "";
+    el.title.textContent=""; el.artist.textContent="";
+    el.title.classList.add("empty"); el.artist.classList.add("empty");
+    el.title.classList.remove("scrolling");
+    el.cover.innerHTML = `<svg class="placeholder" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>`;
+    el.cur.textContent="00:00"; el.dur.textContent="00:00";
+    el.dot.classList.add("off");
+    renderBars(0);
+    if (cfg.hideWhenPaused) el.widget.classList.add("hidden");
+  }
+
+  async function poll() {
+    try {
+      const r = await fetch(`/api/now-playing/${WIDGET_ID}`, {cache:"no-store"});
+      const d = await r.json();
+      if (!d.is_playing || !d.title) { state.playing=false; setIdle(); return; }
+      state = { playing:true, progress:d.progress_ms, duration:d.duration_ms, lastFetch:Date.now() };
+      renderTrack(d); el.dot.classList.remove("off");
+    } catch {}
+  }
+
+  function tick() {
+    if (state.playing && state.duration) {
+      const p = Math.min(state.progress + (Date.now()-state.lastFetch), state.duration);
+      el.cur.textContent = fmt(p);
+      el.dur.textContent = fmt(state.duration);
+      renderBars(p/state.duration);
+    }
+    requestAnimationFrame(tick);
+  }
+
+  (async () => {
+    await loadConfig();
+    el.widget.classList.add("show");
+    setIdle();
+    poll();
+    setInterval(poll, cfg.poll);
+    requestAnimationFrame(tick);
+  })();
+</script>
+</body>
+</html>
