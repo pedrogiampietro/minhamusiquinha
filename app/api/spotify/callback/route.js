@@ -22,7 +22,8 @@ export async function GET(req) {
 
   try {
     const redirectUri = `${base}/api/spotify/callback`;
-    const tokens = await spotify.exchangeCode(code, redirectUri);
+    const app = await store.getUserApp(userId);
+    const tokens = await spotify.exchangeCode(code, redirectUri, app);
     const profile = await spotify.fetchProfile(tokens.access_token);
     const id = crypto.randomBytes(24).toString("hex");
     await store.create(id, { userId, profile, tokens });

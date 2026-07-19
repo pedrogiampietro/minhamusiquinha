@@ -28,3 +28,11 @@ CREATE TABLE IF NOT EXISTS plays (
 );
 
 CREATE INDEX IF NOT EXISTS idx_plays_conn ON plays (connection_id, played_at DESC);
+
+-- Credenciais do app Spotify de cada usuário (cada um cria o próprio app).
+CREATE TABLE IF NOT EXISTS spotify_apps (
+  user_id       TEXT PRIMARY KEY,
+  client_id     TEXT NOT NULL,
+  client_secret TEXT NOT NULL,
+  updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+);

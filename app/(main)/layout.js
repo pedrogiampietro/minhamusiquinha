@@ -11,7 +11,10 @@ export default function MainLayout({ children }) {
           </div>
           <div className={styles.actions}>
             <SignedIn>
-              <a className={`${styles.btn} ${styles.green}`} href="/api/spotify/login">
+              <a className={styles.btn} href="/?settings=1">
+                Configurações
+              </a>
+              <a className={`${styles.btn} ${styles.green}`} href="/?connect=1">
                 + Conectar Spotify
               </a>
               <UserButton afterSignOutUrl="/sign-in" />

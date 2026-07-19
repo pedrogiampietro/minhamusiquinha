@@ -31,6 +31,7 @@ export default function Dashboard() {
   const [previewNonce, setPreviewNonce] = useState(0);
   const [toast, setToast] = useState("");
   const [onboard, setOnboard] = useState({ open: false, step: "welcome", id: null });
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const saveTimer = useRef(null);
   const toastTimer = useRef(null);
@@ -78,6 +79,9 @@ export default function Dashboard() {
     (async () => {
       const params = new URLSearchParams(window.location.search);
       const justConnected = params.get("connected");
+      const wantConnect = params.get("connect") === "1";
+      const wantSettings = params.get("settings") === "1";
+      if (wantSettings) setSettingsOpen(true);
       const list = await loadConnections();
 
       const done = localStorage.getItem("npw_onboarded") === "1";
@@ -90,10 +94,13 @@ export default function Dashboard() {
             : list[0].id;
         selectConn(first);
       }
-      if (justConnected) window.history.replaceState({}, "", "/");
+      if (justConnected || wantConnect || wantSettings)
+        window.history.replaceState({}, "", "/");
 
       // decide o onboarding
-      if (!done && justConnected && active) {
+      if (wantConnect) {
+        setOnboard({ open: true, step: "connect", id: null });
+      } else if (!done && justConnected && active) {
         setOnboard({ open: true, step: "customize", id: justConnected });
       } else if (!done && (!Array.isArray(list) || !list.length)) {
         setOnboard({ open: true, step: "welcome", id: null });
@@ -191,20 +198,28 @@ export default function Dashboard() {
     />
   ) : null;
 
+  const settingsEl = settingsOpen ? (
+    <Settings origin={origin} onClose={() => setSettingsOpen(false)} />
+  ) : null;
+
   // ---------- empty state ----------
   if (connections.length === 0) {
     return (
       <div className={s.wrap}>
         {onboardEl}
+        {settingsEl}
         <div className={s.emptyState}>
           <h1>Nenhuma conexão ainda</h1>
           <p>
             Conecte uma conta do Spotify para gerar o widget e começar a coletar
             métricas de reprodução.
           </p>
-          <a className={`${s.btn} ${s.green}`} href="/api/spotify/login">
+          <button
+            className={`${s.btn} ${s.green}`}
+            onClick={() => setOnboard({ open: true, step: "connect", id: null })}
+          >
             Conectar com Spotify
-          </a>
+          </button>
           <button
             className={`${s.btn}`}
             style={{ marginLeft: 10 }}
@@ -221,6 +236,7 @@ export default function Dashboard() {
   return (
     <div className={s.wrap}>
       {onboardEl}
+      {settingsEl}
       <div className={s.grid}>
         {/* Conexões */}
         <div className={s.card}>
@@ -234,6 +250,12 @@ export default function Dashboard() {
                 onClick={() => selectConn(c.id)}
               />
             ))}
+            <button
+              className={`${s.btn} ${s.settingsBtn}`}
+              onClick={() => setSettingsOpen(true)}
+            >
+              Configurar app do Spotify
+            </button>
           </div>
         </div>
 
@@ -677,9 +699,14 @@ function Onboarding({ initialStep, connectionId, origin, onFinish, onSkip }) {
   const [cfg, setCfg] = useState(null);
   const [nonce, setNonce] = useState(0);
   const [copied, setCopied] = useState(false);
+  const [appCfg, setAppCfg] = useState({ clientId: "", clientSecret: "", configured: false });
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState("");
+  const [copiedUri, setCopiedUri] = useState(false);
   const saveT = useRef(null);
 
   const url = connectionId ? `${origin}/widget/${connectionId}` : "";
+  const redirectUri = `${origin}/api/spotify/callback`;
 
   useEffect(() => {
     if (step === "customize" && connectionId && !cfg) {
@@ -689,6 +716,54 @@ function Onboarding({ initialStep, connectionId, origin, onFinish, onSkip }) {
         .catch(() => {});
     }
   }, [step, connectionId, cfg]);
+
+  useEffect(() => {
+    if (step === "connect") {
+      fetch("/api/spotify/app")
+        .then((r) => r.json())
+        .then((d) =>
+          setAppCfg((a) => ({
+            ...a,
+            clientId: d.clientId || "",
+            configured: !!d.configured,
+          }))
+        )
+        .catch(() => {});
+    }
+  }, [step]);
+
+  const copyUri = () => {
+    navigator.clipboard?.writeText(redirectUri);
+    setCopiedUri(true);
+    setTimeout(() => setCopiedUri(false), 1500);
+  };
+
+  const saveAndConnect = async () => {
+    setErr("");
+    const cid = appCfg.clientId.trim();
+    const csec = appCfg.clientSecret.trim();
+    // já configurado e sem mudar o secret → conecta direto
+    if (!(appCfg.configured && !csec)) {
+      if (!cid || !csec) {
+        setErr("Preencha o Client ID e o Client Secret.");
+        return;
+      }
+      setSaving(true);
+      const r = await fetch("/api/spotify/app", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ clientId: cid, clientSecret: csec }),
+      });
+      setSaving(false);
+      if (!r.ok) {
+        const d = await r.json().catch(() => ({}));
+        setErr(d.error || "Erro ao salvar as credenciais.");
+        return;
+      }
+    }
+    localStorage.setItem("npw_onboarding", "1");
+    window.location.href = "/api/spotify/login";
+  };
 
   const patch = (key, val) => {
     setCfg((prev) => {
@@ -704,11 +779,6 @@ function Onboarding({ initialStep, connectionId, origin, onFinish, onSkip }) {
       }, 350);
       return next;
     });
-  };
-
-  const goConnect = () => {
-    localStorage.setItem("npw_onboarding", "1");
-    window.location.href = "/api/spotify/login";
   };
 
   const copyUrl = () => {
@@ -763,25 +833,78 @@ function Onboarding({ initialStep, connectionId, origin, onFinish, onSkip }) {
         {step === "connect" && (
           <>
             <div className={s.obBody}>
-              <h1 className={s.obTitle}>Conecte seu Spotify</h1>
+              <h1 className={s.obTitle}>Crie seu app no Spotify</h1>
               <p className={s.obText}>
-                Vamos pedir apenas permissão de <b>leitura do que está tocando</b>.
-                Não postamos nada e não alteramos suas playlists — só mostramos a
-                música atual no widget.
+                Cada pessoa usa o próprio app do Spotify (é rápido e gratuito).
+                Pedimos só permissão de <b>leitura do que está tocando</b>.
               </p>
-              <button
-                className={`${s.btn} ${s.green} ${s.obBig}`}
-                onClick={goConnect}
-              >
-                Conectar com Spotify
-              </button>
+              <ol className={s.obList}>
+                <li>
+                  Abra o{" "}
+                  <a
+                    href="https://developer.spotify.com/dashboard"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Spotify Developer Dashboard
+                  </a>{" "}
+                  e clique em <b>Create app</b>.
+                </li>
+                <li>Nome e descrição livres. Marque <b>Web API</b>.</li>
+                <li>
+                  Em <b>Redirect URI</b>, cole exatamente o endereço abaixo:
+                </li>
+              </ol>
+              <div className={s.urlRow}>
+                <input readOnly value={redirectUri} />
+                <button
+                  className={`${s.btn} ${s.green} ${s.sm}`}
+                  onClick={copyUri}
+                >
+                  {copiedUri ? "Copiado!" : "Copiar"}
+                </button>
+              </div>
+              <ol className={s.obList} start={4} style={{ marginTop: 12 }}>
+                <li>
+                  Salve. Depois copie o <b>Client ID</b> e o <b>Client Secret</b>{" "}
+                  do app e cole aqui:
+                </li>
+              </ol>
+              <div className={s.obForm}>
+                <input
+                  className={s.obInput}
+                  placeholder="Client ID"
+                  value={appCfg.clientId}
+                  onChange={(e) =>
+                    setAppCfg((a) => ({ ...a, clientId: e.target.value }))
+                  }
+                />
+                <input
+                  className={s.obInput}
+                  type="password"
+                  placeholder={
+                    appCfg.configured
+                      ? "Client Secret (salvo — deixe em branco p/ manter)"
+                      : "Client Secret"
+                  }
+                  value={appCfg.clientSecret}
+                  onChange={(e) =>
+                    setAppCfg((a) => ({ ...a, clientSecret: e.target.value }))
+                  }
+                />
+              </div>
+              {err && <p className={s.obErr}>{err}</p>}
             </div>
             <div className={s.obFooter}>
               <button className={s.obSkip} onClick={() => setStep("welcome")}>
                 Voltar
               </button>
-              <button className={s.obSkip} onClick={onSkip}>
-                Pular
+              <button
+                className={`${s.btn} ${s.green}`}
+                onClick={saveAndConnect}
+                disabled={saving}
+              >
+                {saving ? "Salvando…" : "Salvar e conectar"}
               </button>
             </div>
           </>
@@ -889,6 +1012,139 @@ function Onboarding({ initialStep, connectionId, origin, onFinish, onSkip }) {
             </div>
           </>
         )}
+      </div>
+    </div>
+  );
+}
+
+// ---------------- Configurações do app Spotify ----------------
+function Settings({ origin, onClose }) {
+  const [appCfg, setAppCfg] = useState({
+    clientId: "",
+    clientSecret: "",
+    configured: false,
+  });
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState("");
+  const [err, setErr] = useState("");
+  const [copiedUri, setCopiedUri] = useState(false);
+  const redirectUri = `${origin}/api/spotify/callback`;
+
+  useEffect(() => {
+    fetch("/api/spotify/app")
+      .then((r) => r.json())
+      .then((d) =>
+        setAppCfg((a) => ({
+          ...a,
+          clientId: d.clientId || "",
+          configured: !!d.configured,
+        }))
+      )
+      .catch(() => {});
+  }, []);
+
+  const copyUri = () => {
+    navigator.clipboard?.writeText(redirectUri);
+    setCopiedUri(true);
+    setTimeout(() => setCopiedUri(false), 1500);
+  };
+
+  const save = async () => {
+    setErr("");
+    setMsg("");
+    const cid = appCfg.clientId.trim();
+    const csec = appCfg.clientSecret.trim();
+    if (!cid) {
+      setErr("Informe o Client ID.");
+      return;
+    }
+    if (!appCfg.configured && !csec) {
+      setErr("Informe o Client Secret.");
+      return;
+    }
+    setSaving(true);
+    const r = await fetch("/api/spotify/app", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ clientId: cid, clientSecret: csec }),
+    });
+    setSaving(false);
+    if (!r.ok) {
+      const d = await r.json().catch(() => ({}));
+      setErr(d.error || "Erro ao salvar.");
+      return;
+    }
+    setMsg("Credenciais salvas.");
+    setAppCfg((a) => ({ ...a, clientSecret: "", configured: true }));
+  };
+
+  return (
+    <div className={s.modalBackdrop} onClick={onClose}>
+      <div className={s.modalCard} onClick={(e) => e.stopPropagation()}>
+        <div className={s.modalHead}>
+          <span className={s.modalTitle}>App do Spotify</span>
+          <button className={s.modalClose} onClick={onClose} aria-label="Fechar">
+            ×
+          </button>
+        </div>
+        <p className={s.obText}>
+          Credenciais do seu app no Spotify. Vai trocar de app? Cole o novo Client
+          ID/Secret e depois clique em <b>Reconectar Spotify</b>.
+        </p>
+
+        <label className={s.setLabel}>
+          Redirect URI (cadastre no app do Spotify)
+        </label>
+        <div className={s.urlRow}>
+          <input readOnly value={redirectUri} />
+          <button className={`${s.btn} ${s.green} ${s.sm}`} onClick={copyUri}>
+            {copiedUri ? "Copiado!" : "Copiar"}
+          </button>
+        </div>
+
+        <div className={s.obForm} style={{ marginTop: 16 }}>
+          <input
+            className={s.obInput}
+            placeholder="Client ID"
+            value={appCfg.clientId}
+            onChange={(e) =>
+              setAppCfg((a) => ({ ...a, clientId: e.target.value }))
+            }
+          />
+          <input
+            className={s.obInput}
+            type="password"
+            placeholder={
+              appCfg.configured
+                ? "Client Secret (salvo — deixe em branco p/ manter)"
+                : "Client Secret"
+            }
+            value={appCfg.clientSecret}
+            onChange={(e) =>
+              setAppCfg((a) => ({ ...a, clientSecret: e.target.value }))
+            }
+          />
+        </div>
+        {err && <p className={s.obErr}>{err}</p>}
+        {msg && <p className={s.setOk}>{msg}</p>}
+
+        <div className={s.modalFooter}>
+          <a className={`${s.btn} ${s.sm}`} href="/api/spotify/login">
+            Reconectar Spotify
+          </a>
+          <div style={{ display: "flex", gap: 10 }}>
+            <button className={`${s.btn} ${s.sm}`} onClick={onClose}>
+              Fechar
+            </button>
+            <button
+              className={`${s.btn} ${s.green} ${s.sm}`}
+              onClick={save}
+              disabled={saving}
+            >
+              {saving ? "Salvando…" : "Salvar"}
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -45,22 +45,29 @@ CLERK_SECRET_KEY=sk_test_...
 npm run db:migrate
 ```
 
-Isso aplica `db/schema.sql` (tabelas `connections` e `plays`) no banco definido
-em `DATABASE_URL`. Rode uma vez.
+Isso aplica `db/schema.sql` (tabelas `connections`, `plays` e `spotify_apps`) no
+banco definido em `DATABASE_URL`. É idempotente — pode rodar de novo sempre que o
+schema mudar (ex.: ao adicionar a tabela `spotify_apps`).
 
-## 4. Ajustar o Spotify (resolve o `invalid_client`)
+## 4. Spotify — cada usuário cria o próprio app
 
-O erro `invalid_client` significa que o **Client ID/Secret não confere**. No
-[Spotify Developer Dashboard](https://developer.spotify.com/dashboard):
+O modelo é **multiusuário**: cada pessoa cria o próprio app no Spotify e informa
+o Client ID/Secret no onboarding (guardados por usuário na tabela `spotify_apps`).
+O app global do `.env.local` (`SPOTIFY_CLIENT_ID/SECRET`) é **opcional** e serve
+só de fallback para a sua própria conta.
 
-1. Abra seu app → **Settings**.
-2. Confirme que o **Client ID** e o **Client Secret** batem com o `.env.local`
-   (o Secret pode ter sido regenerado — se estiver diferente, atualize).
-3. Em **Redirect URIs**, adicione exatamente:
-   ```
-   http://127.0.0.1:8888/api/spotify/callback
-   ```
-   (mudou de `/callback` para `/api/spotify/callback` na nova versão.)
+Fluxo do usuário (o onboarding guia isso):
+
+1. Abrir o [Spotify Developer Dashboard](https://developer.spotify.com/dashboard)
+   → **Create app** (marcar **Web API**).
+2. Em **Redirect URIs**, colar exatamente `${BASE_URL}/api/spotify/callback`
+   (local: `http://127.0.0.1:8888/api/spotify/callback`; produção: a URL da
+   Vercel). O onboarding mostra o endereço exato com botão de copiar.
+3. Copiar **Client ID** e **Client Secret** e colar no wizard → **Salvar e
+   conectar**.
+
+> Vantagem: como cada um usa o próprio app (é o dono), o Development Mode do
+> Spotify não limita — não precisa pedir Extended Quota nem liberar e-mails.
 
 ## 5. Rodar
 
