@@ -1,0 +1,19 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  /* Fundo transparente por padrão para o widget do OBS.
+     O painel aplica seu próprio fundo no wrapper. */
+  background: transparent;
+  color: #f2f2f2;
+  font-family: "Segoe UI", -apple-system, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+}

@@ -1,4 +1,20 @@
+# deps
 node_modules/
-tokens/
-data/
+
+# next
+.next/
+out/
+next-env.d.ts
+
+# env
 .env
+.env.local
+.env*.local
+
+# legacy runtime data
+legacy/tokens/
+legacy/data/
+
+# misc
+.DS_Store
+*.log

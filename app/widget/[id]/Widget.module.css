@@ -1,0 +1,450 @@
+/* ============ base ============ */
+.widget {
+  position: relative;
+  color: var(--text);
+  font-family: var(--font);
+  border-radius: var(--corner);
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+.hidden {
+  opacity: 0 !important;
+}
+
+.inner {
+  position: relative;
+  z-index: 2;
+}
+
+/* fundo com capa desfocada */
+.blurLayer {
+  position: absolute;
+  inset: -24px;
+  background-size: cover;
+  background-position: center;
+  filter: blur(30px) saturate(1.5);
+  transform: scale(1.25);
+  z-index: 0;
+}
+.blurOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1;
+}
+
+/* ============ capa ============ */
+.cover {
+  width: 150px;
+  height: 150px;
+  border-radius: 18px;
+  background: var(--card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.4);
+  flex-shrink: 0;
+  color: #fff;
+}
+.cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.placeholder {
+  width: 54px;
+  height: 54px;
+  opacity: 0.85;
+}
+.coverGlow {
+  box-shadow: 0 0 34px 4px var(--accent);
+}
+.coverVinyl {
+  border-radius: 50%;
+  position: relative;
+  box-shadow: 0 0 0 6px rgba(0, 0, 0, 0.55), 0 12px 30px rgba(0, 0, 0, 0.5);
+  animation: spin 8s linear infinite;
+  animation-play-state: paused;
+}
+.coverVinyl.spin {
+  animation-play-state: running;
+}
+.coverVinyl.coverGlow {
+  box-shadow: 0 0 34px 4px var(--accent), 0 0 0 6px rgba(0, 0, 0, 0.55);
+}
+.vinylHole {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--bg);
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.18);
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ============ meta ============ */
+.meta {
+  background: var(--card);
+  border-radius: 22px;
+  padding: 22px 26px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+  min-width: 0;
+}
+.titleWrap {
+  overflow: hidden;
+  white-space: nowrap;
+}
+.title {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  display: inline-block;
+}
+.artist {
+  font-size: 17px;
+  color: var(--text);
+  opacity: 0.62;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.album {
+  font-size: 13px;
+  opacity: 0.5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.empty {
+  height: 6px;
+  width: 34px;
+  border-radius: 3px;
+  background: currentColor;
+  opacity: 0.22;
+  display: inline-block;
+}
+@keyframes scroll-x {
+  0%,
+  15% {
+    transform: translateX(0);
+  }
+  85%,
+  100% {
+    transform: translateX(var(--shift));
+  }
+}
+.scrolling {
+  animation: scroll-x 12s linear infinite alternate;
+}
+
+/* ============ progresso ============ */
+.progress {
+  background: var(--card);
+  border-radius: 22px;
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.pvis {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+.timeLabel {
+  font-size: 26px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.5px;
+}
+.bars {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+}
+.bars span {
+  flex: 1;
+  height: 12px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.14);
+  transition: background 0.25s ease;
+}
+.bars span.on {
+  background: var(--accent);
+}
+.bars.dots {
+  justify-content: space-between;
+  gap: 4px;
+}
+.bars.dots span {
+  flex: 0 0 auto;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+.lineTrack {
+  flex: 1;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  overflow: hidden;
+}
+.lineFill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 999px;
+  transition: width 0.25s linear;
+}
+
+.statusDot {
+  position: absolute;
+  left: 26px;
+  bottom: 6px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 10px var(--accent);
+  z-index: 3;
+}
+.statusDot.off {
+  background: #555;
+  box-shadow: none;
+}
+
+/* ============ skin: compact ============ */
+.skin_compact {
+  width: 640px;
+  padding: 14px;
+  background: var(--bg);
+}
+.compactGrid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto;
+  gap: 10px 14px;
+}
+.skin_compact .cover {
+  grid-row: 1 / 3;
+}
+
+/* ============ skin: minimal ============ */
+.skin_minimal {
+  width: 460px;
+  padding: 12px 16px;
+  background: var(--bg);
+}
+.minimalRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.skin_minimal .cover {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  box-shadow: none;
+}
+.skin_minimal .placeholder {
+  width: 26px;
+  height: 26px;
+}
+.mid {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.skin_minimal .meta {
+  background: transparent;
+  padding: 0;
+  gap: 2px;
+}
+.skin_minimal .title {
+  font-size: 16px;
+}
+.skin_minimal .artist {
+  font-size: 13px;
+}
+.skin_minimal .progress {
+  background: transparent;
+  padding: 0;
+  gap: 10px;
+}
+.skin_minimal .timeLabel {
+  font-size: 11px;
+  font-weight: 600;
+  opacity: 0.7;
+}
+.skin_minimal .bars {
+  height: 8px;
+  gap: 3px;
+}
+.skin_minimal .bars span {
+  height: 4px;
+  border-radius: 2px;
+}
+.skin_minimal .lineTrack {
+  height: 5px;
+}
+
+/* ============ skin: vinyl ============ */
+.skin_vinyl {
+  width: 560px;
+  padding: 20px 24px;
+  background: var(--bg);
+}
+.vinylRow {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+.skin_vinyl .meta {
+  background: transparent;
+  padding: 0;
+}
+.skin_vinyl .mid {
+  gap: 14px;
+}
+.skin_vinyl .progress {
+  background: var(--card);
+  border-radius: 16px;
+  padding: 12px 18px;
+}
+.skin_vinyl .timeLabel {
+  font-size: 16px;
+}
+
+/* ============ skin: boxy ============ */
+.skin_boxy {
+  width: 320px;
+  padding: 16px;
+  background: var(--bg);
+}
+.boxyCol {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.skin_boxy .cover {
+  width: 100%;
+  height: 288px;
+  border-radius: 16px;
+}
+.skin_boxy .meta {
+  background: transparent;
+  padding: 0;
+  align-items: center;
+  text-align: center;
+  gap: 4px;
+}
+.skin_boxy .titleWrap {
+  max-width: 100%;
+}
+.skin_boxy .title {
+  font-size: 20px;
+}
+.skin_boxy .artist {
+  font-size: 14px;
+}
+.skin_boxy .progress {
+  background: transparent;
+  padding: 0;
+  gap: 10px;
+}
+.skin_boxy .timeLabel {
+  font-size: 12px;
+  font-weight: 700;
+  opacity: 0.7;
+}
+.skin_boxy .bars {
+  height: 10px;
+}
+.skin_boxy .bars span {
+  height: 6px;
+}
+.skin_boxy .lineTrack {
+  height: 6px;
+}
+
+/* ============ skin: macOS pill ============ */
+.skin_macos {
+  width: 420px;
+  padding: 12px 16px;
+  background: rgba(28, 28, 32, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(24px) saturate(1.5);
+  -webkit-backdrop-filter: blur(24px) saturate(1.5);
+}
+.macRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.skin_macos .cover {
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+.skin_macos .placeholder {
+  width: 24px;
+  height: 24px;
+}
+.skin_macos .mid {
+  gap: 7px;
+}
+.skin_macos .meta {
+  background: transparent;
+  padding: 0;
+  gap: 2px;
+}
+.skin_macos .title {
+  font-size: 15px;
+}
+.skin_macos .artist {
+  font-size: 12px;
+}
+.skin_macos .progress {
+  background: transparent;
+  padding: 0;
+  gap: 8px;
+}
+.skin_macos .timeLabel {
+  font-size: 10px;
+  font-weight: 600;
+  opacity: 0.65;
+}
+.skin_macos .bars {
+  height: 6px;
+  gap: 2px;
+}
+.skin_macos .bars span {
+  height: 3px;
+  border-radius: 2px;
+}
+.skin_macos .lineTrack {
+  height: 5px;
+}

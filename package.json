@@ -1,15 +1,24 @@
 {
   "name": "spotify-now-playing-widget",
-  "version": "1.0.0",
-  "description": "Widget 'Now Playing' do Spotify para OBS, estilo 6K Labs / Amuse",
+  "version": "2.0.0",
+  "description": "Widget 'Now Playing' do Spotify (Next.js + Neon Postgres + Clerk)",
+  "private": true,
   "type": "module",
-  "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "dev": "next dev -p 8888",
+    "build": "next build",
+    "start": "next start -p 8888",
+    "lint": "next lint",
+    "db:migrate": "node db/migrate.mjs"
   },
   "dependencies": {
-    "cookie-parser": "^1.4.7",
-    "dotenv": "^16.4.5",
-    "express": "^4.21.2"
+    "@clerk/nextjs": "^6.12.0",
+    "@neondatabase/serverless": "^0.10.4",
+    "next": "^15.1.6",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "dotenv": "^16.4.7"
   }
 }
