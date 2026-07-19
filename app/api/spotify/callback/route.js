@@ -3,9 +3,10 @@ import { auth } from "@clerk/nextjs/server";
 import crypto from "crypto";
 import * as store from "@/lib/store";
 import * as spotify from "@/lib/spotify";
+import { getBaseUrl } from "@/lib/base-url";
 
 export async function GET(req) {
-  const base = process.env.BASE_URL || "http://127.0.0.1:8888";
+  const base = getBaseUrl(req);
   const { userId } = await auth();
   if (!userId) return NextResponse.redirect(new URL("/sign-in", base));
 

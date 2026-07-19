@@ -2,11 +2,12 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import crypto from "crypto";
 import * as store from "@/lib/store";
+import { getBaseUrl } from "@/lib/base-url";
 
 const SCOPES = "user-read-currently-playing user-read-playback-state";
 
-export async function GET() {
-  const base = process.env.BASE_URL || "http://127.0.0.1:8888";
+export async function GET(req) {
+  const base = getBaseUrl(req);
   const { userId } = await auth();
   if (!userId) return NextResponse.redirect(new URL("/sign-in", base));
 

@@ -810,10 +810,10 @@ function Onboarding({ initialStep, connectionId, origin, onFinish, onSkip }) {
               <div className={s.obIcon}>
                 <span className={s.obDot} />
               </div>
-              <h1 className={s.obTitle}>Bem-vindo ao Now Playing</h1>
+              <h1 className={s.obTitle}>Bem-vindo ao Minha Musiquinha</h1>
               <p className={s.obText}>
-                Em 3 passos rápidos você conecta seu Spotify, deixa o widget com a
-                sua cara e coloca no OBS. Leva menos de um minuto.
+                Em 3 passos rápidos você conecta seu Spotify, personaliza o
+                widget e coloca no OBS. É só copiar e colar o que pedirmos aqui.
               </p>
             </div>
             <div className={s.obFooter}>
@@ -833,10 +833,10 @@ function Onboarding({ initialStep, connectionId, origin, onFinish, onSkip }) {
         {step === "connect" && (
           <>
             <div className={s.obBody}>
-              <h1 className={s.obTitle}>Crie seu app no Spotify</h1>
+              <h1 className={s.obTitle}>Configure o app do Spotify</h1>
               <p className={s.obText}>
-                Cada pessoa usa o próprio app do Spotify (é rápido e gratuito).
-                Pedimos só permissão de <b>leitura do que está tocando</b>.
+                Cada pessoa usa o próprio app do Spotify. É rápido, gratuito e
+                pedimos só permissão de <b>leitura do que está tocando</b>.
               </p>
               <ol className={s.obList}>
                 <li>
@@ -850,7 +850,10 @@ function Onboarding({ initialStep, connectionId, origin, onFinish, onSkip }) {
                   </a>{" "}
                   e clique em <b>Create app</b>.
                 </li>
-                <li>Nome e descrição livres. Marque <b>Web API</b>.</li>
+                <li>
+                  Preencha o <b>nome</b> e a <b>descrição</b> do jeito que quiser.
+                  Marque <b>Web API</b>.
+                </li>
                 <li>
                   Em <b>Redirect URI</b>, cole exatamente o endereço abaixo:
                 </li>
@@ -866,8 +869,8 @@ function Onboarding({ initialStep, connectionId, origin, onFinish, onSkip }) {
               </div>
               <ol className={s.obList} start={4} style={{ marginTop: 12 }}>
                 <li>
-                  Salve. Depois copie o <b>Client ID</b> e o <b>Client Secret</b>{" "}
-                  do app e cole aqui:
+                  Salve o app. Depois copie o <b>Client ID</b> e o{" "}
+                  <b>Client Secret</b> e cole aqui para continuar:
                 </li>
               </ol>
               <div className={s.obForm}>
