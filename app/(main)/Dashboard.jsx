@@ -851,8 +851,11 @@ function Onboarding({ initialStep, connectionId, origin, onFinish, onSkip }) {
                   e clique em <b>Create app</b>.
                 </li>
                 <li>
-                  Preencha o <b>nome</b> e a <b>descrição</b> do jeito que quiser.
-                  Marque <b>Web API</b>.
+                  Preencha com estes dados e marque <b>Web API</b>:
+                  <br />
+                  <b>Nome:</b> Minha Musiquinha
+                  <br />
+                  <b>Descrição:</b> Widget para exibir o que estou ouvindo no OBS.
                 </li>
                 <li>
                   Em <b>Redirect URI</b>, cole exatamente o endereço abaixo:
